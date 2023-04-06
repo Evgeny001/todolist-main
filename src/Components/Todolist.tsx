@@ -1,4 +1,4 @@
-import React, {useState} from "react"
+import React, {useState, KeyboardEvent, ChangeEvent} from "react"
 
 type TodolistPropsType = {
     title?: string
@@ -15,55 +15,64 @@ export type TaskType = {
 export type FilterValuesType = "all" | "active" | "completed"
 
 export const Todolist: React.FC<TodolistPropsType> = (props) => {
-    const tasksItems: JSX.Element[] | JSX.Element =
-        props.tasks.length
-            ? props.tasks.map((el) => {
-                return (
-                    <li key={el.id}>
-                        <input type="checkbox" checked={el.isDone}/>
-                        <span>{el.title}</span>
-                        <button onClick={() => props.removTask(el.id)}>X</button>
-                    </li>
-                )
-            })
-            : <span>Your tasklist is empty</span>
+    const [title, setTitle] = useState<string>("")
     // const inputRef = React.useRef<any>()
     // const addTaskHandler = () => {
     //     props.addTask(inputRef.current.value)
     //     inputRef.current.value= ""
     // }
-    const [title, setTitle] = useState<string>("")
+    const changeLocalTitle = (event: ChangeEvent<HTMLInputElement>) => {
+        setTitle(event.currentTarget.value)
+    }
+    const addTaskHandler = () => {
+        const trimmedTitle = title.trim()
+        if (trimmedTitle) {
+            props.addTask(trimmedTitle)
+        }
+        setTitle("")
+    }
+
+    const onKeyDownAddTask = (e: KeyboardEvent<HTMLInputElement>) => e.key === "Enter" && addTaskHandler()
+    const setAllFilterValue = () => props.changeFilterValue("all")
+    const setActiveFilterValue = () => props.changeFilterValue("active")
+    const setCompletedFilterValue = () => props.changeFilterValue("completed")
+
+    const tasksItems: JSX.Element[] | JSX.Element =
+        props.tasks.length
+            ? props.tasks.map((el) => {
+                const removTaskHandler = () => props.removTask(el.id)
+                return (
+                    <li key={el.id}>
+                        <input type="checkbox" checked={el.isDone}/>
+                        <span>{el.title}</span>
+                        <button onClick={removTaskHandler}>X</button>
+                        {/*<button onClick={() => props.removTask(el.id)}>X</button>*/}
+                    </li>
+                )
+            })
+            : <span>Your tasklist is empty</span>
+
     return (
         <div>
             <h3>{props.title}</h3>
             <div>
                 {/*<input ref={inputRef}/>*/}
                 {/*<button onClick={addTaskHandler}>+</button>*/}
-                <input onChange={(event) => {
-                    setTitle(event.currentTarget.value)
-                }}
+                <input onChange={changeLocalTitle}
                        value={title}
-                       onKeyDown={(event) => {
-                           if (event.key === "Enter") {
-                               props.addTask(title)
-                               setTitle("")
-                           }
-                       }}/>
+                       onKeyDown={onKeyDownAddTask}/>
                 <button
-                    onClick={() => {
-                        props.addTask(title)
-                        setTitle("")
-                    }}
-                >+
+                    disabled={title.trim().length === 0} onClick={addTaskHandler}>+
                 </button>
+                {title.length > 15 && <div style={{color: "hotpink"}}>Task title is long</div>}
             </div>
             <ul>
                 {tasksItems}
             </ul>
             <div>
-                <button onClick={() => props.changeFilterValue("all")}>All</button>
-                <button onClick={() => props.changeFilterValue("active")}>Active</button>
-                <button onClick={() => props.changeFilterValue("completed")}>Completed</button>
+                <button onClick={setAllFilterValue}>All</button>
+                <button onClick={setActiveFilterValue}>Active</button>
+                <button onClick={setCompletedFilterValue}>Completed</button>
             </div>
         </div>
 
